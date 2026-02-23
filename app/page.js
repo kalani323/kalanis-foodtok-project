@@ -101,68 +101,87 @@ export default function App() {
         </button>
       </div>
 
-      {/* Stats */}
-      <div style={s({ display:'flex', gap:28, padding:'18px 28px', borderBottom:'1px solid #2a2520', background:'#13110d' })}>
-        {[[restaurants.length,'Saved'],[restaurants.filter(r=>r.visited).length,'Visited'],[restaurants.filter(r=>!r.visited).length,'Wishlist'],[[...new Set(restaurants.map(r=>r.cuisine))].length,'Cuisines']].map(([n,l])=>(
-          <div key={l} style={s({ textAlign:'center' })}>
-            <span style={s({ fontFamily:"'Playfair Display',serif", fontSize:28, color:'#e8d5b0', display:'block' })}>{n}</span>
-            <span style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#7a6e5f', textTransform:'uppercase', letterSpacing:1 })}>{l}</span>
-          </div>
-        ))}
-      </div>
+      {/* Body */}
+      <div style={s({ display:'flex' })}>
 
-      {/* Filters */}
-      <div style={s({ padding:'16px 28px', display:'flex', gap:10, flexWrap:'wrap', alignItems:'center', borderBottom:'1px solid #2a2520' })}>
-        <input className="inp" style={s({ width:220 })} placeholder="Search name or city…" value={filters.search} onChange={e=>setFilters(f=>({...f,search:e.target.value}))} />
-        <span style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#7a6e5f', textTransform:'uppercase', letterSpacing:1 })}>Filter:</span>
-        {[['cuisine',CUISINES],['price',PRICES],['vibe',VIBES]].map(([k,opts])=>(
-          <label key={k} style={s({ display:'flex', alignItems:'center', gap:5 })}>
-            <span style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#7a6e5f', textTransform:'uppercase', letterSpacing:1 })}>{k.charAt(0).toUpperCase()+k.slice(1)}:</span>
-            <select className="inp" value={filters[k]} onChange={e=>setFilters(f=>({...f,[k]:e.target.value}))}>
-              {opts.map(o=><option key={o}>{o}</option>)}
+        {/* Sidebar */}
+        <div style={s({ width:220, flexShrink:0, background:'#13110d', borderRight:'1px solid #2a2520', padding:'20px 16px', position:'sticky', top:67, height:'calc(100vh - 67px)', overflowY:'auto' })}>
+
+          {/* Stats */}
+          <div style={s({ marginBottom:24 })}>
+            <div style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#7a6e5f', textTransform:'uppercase', letterSpacing:1, marginBottom:10 })}>Stats</div>
+            <div style={s({ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 })}>
+              {[[restaurants.length,'Saved'],[restaurants.filter(r=>r.visited).length,'Visited'],[restaurants.filter(r=>!r.visited).length,'Wishlist'],[[...new Set(restaurants.map(r=>r.cuisine))].length,'Cuisines']].map(([n,l])=>(
+                <div key={l} style={s({ textAlign:'center', background:'#1a1813', border:'1px solid #2a2520', borderRadius:6, padding:'10px 6px' })}>
+                  <span style={s({ fontFamily:"'Playfair Display',serif", fontSize:22, color:'#e8d5b0', display:'block' })}>{n}</span>
+                  <span style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:10, color:'#7a6e5f', textTransform:'uppercase', letterSpacing:1 })}>{l}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Search */}
+          <div style={s({ marginBottom:16 })}>
+            <div style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#7a6e5f', textTransform:'uppercase', letterSpacing:1, marginBottom:6 })}>Search</div>
+            <input className="inp" style={s({ width:'100%', boxSizing:'border-box' })} placeholder="Name or city…" value={filters.search} onChange={e=>setFilters(f=>({...f,search:e.target.value}))} />
+          </div>
+
+          {/* Filter dropdowns */}
+          {[['cuisine','Cuisine',CUISINES],['price','Price',PRICES],['vibe','Vibe',VIBES]].map(([k,label,opts])=>(
+            <div key={k} style={s({ marginBottom:12 })}>
+              <div style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#7a6e5f', textTransform:'uppercase', letterSpacing:1, marginBottom:6 })}>{label}</div>
+              <select className="inp" style={s({ width:'100%', boxSizing:'border-box' })} value={filters[k]} onChange={e=>setFilters(f=>({...f,[k]:e.target.value}))}>
+                {opts.map(o=><option key={o}>{o}</option>)}
+              </select>
+            </div>
+          ))}
+
+          {/* Status */}
+          <div>
+            <div style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#7a6e5f', textTransform:'uppercase', letterSpacing:1, marginBottom:6 })}>Status</div>
+            <select className="inp" style={s({ width:'100%', boxSizing:'border-box' })} value={filters.visited} onChange={e=>setFilters(f=>({...f,visited:e.target.value}))}>
+              {['All','Wishlist','Visited'].map(v=><option key={v}>{v}</option>)}
             </select>
-          </label>
-        ))}
-        <label style={s({ display:'flex', alignItems:'center', gap:5 })}>
-          <span style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#7a6e5f', textTransform:'uppercase', letterSpacing:1 })}>Status:</span>
-          <select className="inp" value={filters.visited} onChange={e=>setFilters(f=>({...f,visited:e.target.value}))}>
-            {['All','Wishlist','Visited'].map(v=><option key={v}>{v}</option>)}
-          </select>
-        </label>
-      </div>
+          </div>
 
-      {/* Grid */}
-      <div style={s({ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:18, padding:'24px 28px' })}>
-        {filtered.length===0 ? (
-          <div style={s({ textAlign:'center', padding:'80px 20px', color:'#4a4236', gridColumn:'1/-1' })}>
-            <div style={s({ fontSize:44, marginBottom:14 })}>🍽️</div>
-            <div>No restaurants found</div>
-          </div>
-        ) : filtered.map(r=>(
-          <div key={r.id} className="card" style={r.visited?{opacity:.6}:{}}>
-            <div style={s({ height:130, background:'linear-gradient(135deg,#1f1a14,#2a2016)', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden', borderBottom:'1px solid #2a2520' })}>
-              {r.thumb ? <img src={r.thumb} alt={r.name} style={s({ width:'100%', height:'100%', objectFit:'cover', opacity:.7 })} /> : <span style={s({ fontSize:34, opacity:.35 })}>🍽️</span>}
-              {r.visited && <span style={s({ position:'absolute', top:10, left:10, background:'#4ade80', color:'#0f0e0c', fontSize:10, padding:'3px 9px', borderRadius:20, fontWeight:600 })}>✓ Visited</span>}
-            </div>
-            <div style={s({ padding:15 })}>
-              <div style={s({ fontFamily:"'Playfair Display',serif", fontSize:20, color:'#e8d5b0', marginBottom:8 })}>{r.name}</div>
-              <div style={s({ display:'flex', gap:7, flexWrap:'wrap', marginBottom:9 })}>
-                <span className="tag" style={s({ background:'#2a2016', color:'#c4a882', border:'1px solid #3a3228' })}>{r.cuisine}</span>
-                <span className="tag" style={s({ fontWeight:600, background:'transparent', border:`1px solid ${priceColor(r.price)}55`, color:priceColor(r.price) })}>{r.price}</span>
-                <span className="tag" style={s({ background:'#1a1f2a', color:'#82a8c4', border:'1px solid #283040' })}>{r.vibe}</span>
+        </div>
+
+        {/* Grid */}
+        <div style={s({ flex:1, minWidth:0 })}>
+          <div style={s({ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:18, padding:'24px 28px' })}>
+            {filtered.length===0 ? (
+              <div style={s({ textAlign:'center', padding:'80px 20px', color:'#4a4236', gridColumn:'1/-1' })}>
+                <div style={s({ fontSize:44, marginBottom:14 })}>🍽️</div>
+                <div>No restaurants found</div>
               </div>
-              {r.location && <div style={s({ fontSize:13, color:'#7a6e5f', marginBottom:7 })}>📍 {r.location}</div>}
-              {r.notes && <div style={s({ fontSize:13, color:'#a09282', fontStyle:'italic', lineHeight:1.5, marginBottom:11 })}>"{r.notes}"</div>}
-              <div style={s({ display:'flex', gap:7, paddingTop:11, borderTop:'1px solid #2a2520' })}>
-                {r.visited
-                  ? <button className="btn" style={s({ color:'#7a6e5f', borderColor:'#3a3228', background:'transparent' })} onClick={()=>toggleVisited(r.id)}>Unmark</button>
-                  : <button className="btn" style={s({ color:'#4ade80', borderColor:'#4ade80', background:'transparent' })} onClick={()=>toggleVisited(r.id)}>Mark Visited ✓</button>
-                }
-                <button className="btn" style={s({ color:'#f43f5e', borderColor:'#f43f5e', background:'transparent', marginLeft:'auto' })} onClick={()=>del(r.id)}>Delete</button>
+            ) : filtered.map(r=>(
+              <div key={r.id} className="card" style={r.visited?{opacity:.6}:{}}>
+                <div style={s({ height:130, background:'linear-gradient(135deg,#1f1a14,#2a2016)', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden', borderBottom:'1px solid #2a2520' })}>
+                  {r.thumb ? <img src={r.thumb} alt={r.name} style={s({ width:'100%', height:'100%', objectFit:'cover', opacity:.7 })} /> : <span style={s({ fontSize:34, opacity:.35 })}>🍽️</span>}
+                  {r.visited && <span style={s({ position:'absolute', top:10, left:10, background:'#4ade80', color:'#0f0e0c', fontSize:10, padding:'3px 9px', borderRadius:20, fontWeight:600 })}>✓ Visited</span>}
+                </div>
+                <div style={s({ padding:15 })}>
+                  <div style={s({ fontFamily:"'Playfair Display',serif", fontSize:20, color:'#e8d5b0', marginBottom:8 })}>{r.name}</div>
+                  <div style={s({ display:'flex', gap:7, flexWrap:'wrap', marginBottom:9 })}>
+                    <span className="tag" style={s({ background:'#2a2016', color:'#c4a882', border:'1px solid #3a3228' })}>{r.cuisine}</span>
+                    <span className="tag" style={s({ fontWeight:600, background:'transparent', border:`1px solid ${priceColor(r.price)}55`, color:priceColor(r.price) })}>{r.price}</span>
+                    <span className="tag" style={s({ background:'#1a1f2a', color:'#82a8c4', border:'1px solid #283040' })}>{r.vibe}</span>
+                  </div>
+                  {r.location && <div style={s({ fontSize:13, color:'#7a6e5f', marginBottom:7 })}>📍 {r.location}</div>}
+                  {r.notes && <div style={s({ fontSize:13, color:'#a09282', fontStyle:'italic', lineHeight:1.5, marginBottom:11 })}>"{r.notes}"</div>}
+                  <div style={s({ display:'flex', gap:7, paddingTop:11, borderTop:'1px solid #2a2520' })}>
+                    {r.visited
+                      ? <button className="btn" style={s({ color:'#7a6e5f', borderColor:'#3a3228', background:'transparent' })} onClick={()=>toggleVisited(r.id)}>Unmark</button>
+                      : <button className="btn" style={s({ color:'#4ade80', borderColor:'#4ade80', background:'transparent' })} onClick={()=>toggleVisited(r.id)}>Mark Visited ✓</button>
+                    }
+                    <button className="btn" style={s({ color:'#f43f5e', borderColor:'#f43f5e', background:'transparent', marginLeft:'auto' })} onClick={()=>del(r.id)}>Delete</button>
+                  </div>
+                </div>
               </div>
-            </div>
+            ))}
           </div>
-        ))}
+        </div>
+
       </div>
 
       {/* Modal */}
