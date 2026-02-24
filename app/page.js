@@ -27,6 +27,7 @@ export default function App() {
   const [status, setStatus] = useState('idle') // idle | loading | success | warn | error
   const [preview, setPreview] = useState(null)
   const [dragOver, setDragOver] = useState(false)
+  const [editId, setEditId] = useState(null)
   const fileRef = useRef()
 
   const analyze = useCallback(async (file) => {
@@ -52,25 +53,34 @@ export default function App() {
   const handleFile = e => { const f = e.target.files?.[0]; if (f) analyze(f); e.target.value = '' }
   const handleDrop = e => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files?.[0]; if (f) analyze(f) }
 
-  const openForm = () => { setForm(BLANK); setStatus('idle'); setPreview(null); setShowForm(true) }
+  const openForm = () => { setForm(BLANK); setStatus('idle'); setPreview(null); setEditId(null); setShowForm(true) }
+
+  const openEdit = (r) => { setForm({ name: r.name, cuisine: r.cuisine, price: r.price, location: r.location, vibe: r.vibe, notes: r.notes || '', website: r.website || '' }); setPreview(null); setStatus('idle'); setEditId(r.id); setShowForm(true) }
+
+  const closeForm = () => { setShowForm(false); setStatus('idle'); setPreview(null); setForm(BLANK); setEditId(null) }
 
   const save = () => {
     if (!form.name) return
-    const id = Date.now()
-    const { name, location } = form
-    setRestaurants(p => [...p, { ...form, id, visited: false, thumb: null, website: '' }])
-    setShowForm(false); setStatus('idle'); setPreview(null); setForm(BLANK)
+    if (editId) {
+      setRestaurants(p => p.map(r => r.id === editId ? { ...r, ...form } : r))
+      closeForm()
+    } else {
+      const id = Date.now()
+      const { name, location } = form
+      setRestaurants(p => [...p, { ...form, id, visited: false, thumb: null, website: '' }])
+      closeForm()
 
-    fetch('/api/places', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, location })
-    }).then(r => r.json()).then(data => {
-      setRestaurants(p => p.map(r => r.id === id
-        ? { ...r, thumb: data.photoName ? `/api/photo?name=${encodeURIComponent(data.photoName)}` : r.thumb, website: data.website ?? r.website }
-        : r
-      ))
-    }).catch(() => {})
+      fetch('/api/places', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, location })
+      }).then(r => r.json()).then(data => {
+        setRestaurants(p => p.map(r => r.id === id
+          ? { ...r, thumb: data.photoName ? `/api/photo?name=${encodeURIComponent(data.photoName)}` : r.thumb, website: data.website ?? r.website }
+          : r
+        ))
+      }).catch(() => {})
+    }
   }
 
   const toggleVisited = id => setRestaurants(p => p.map(r => r.id === id ? { ...r, visited: !r.visited } : r))
@@ -213,7 +223,8 @@ export default function App() {
                       ? <button className="btn" style={s({ color:'#7a6e5f', borderColor:'#3a3228', background:'transparent' })} onClick={()=>toggleVisited(r.id)}>Unmark</button>
                       : <button className="btn" style={s({ color:'#4ade80', borderColor:'#4ade80', background:'transparent' })} onClick={()=>toggleVisited(r.id)}>Mark Visited ✓</button>
                     }
-                    <button className="btn" style={s({ color:'#f43f5e', borderColor:'#f43f5e', background:'transparent', marginLeft:'auto' })} onClick={()=>del(r.id)}>Delete</button>
+                    <button className="btn" style={s({ color:'#c4a882', borderColor:'#3a3228', background:'transparent', marginLeft:'auto' })} onClick={()=>openEdit(r)}>Edit</button>
+                    <button className="btn" style={s({ color:'#f43f5e', borderColor:'#f43f5e', background:'transparent' })} onClick={()=>del(r.id)}>Delete</button>
                   </div>
                 </div>
               </div>
@@ -225,14 +236,14 @@ export default function App() {
 
       {/* Modal */}
       {showForm && (
-        <div onClick={e=>e.target===e.currentTarget&&setShowForm(false)} style={s({ position:'fixed', inset:0, background:'rgba(0,0,0,.9)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:200, padding:16 })}>
+        <div onClick={e=>e.target===e.currentTarget&&closeForm()} style={s({ position:'fixed', inset:0, background:'rgba(0,0,0,.9)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:200, padding:16 })}>
           <div style={s({ background:'#1a1813', border:'1px solid #2a2520', borderRadius:10, padding:28, width:'100%', maxWidth:480, maxHeight:'92vh', overflowY:'auto' })}>
-            <div style={s({ fontFamily:"'Playfair Display',serif", fontSize:22, fontStyle:'italic', color:'#e8d5b0', marginBottom:4 })}>Save a Restaurant</div>
-            <div style={s({ fontSize:12, color:'#5a4e3a', marginBottom:22 })}>Screenshot a TikTok or Reel → upload it → Claude reads it ✨</div>
+            <div style={s({ fontFamily:"'Playfair Display',serif", fontSize:22, fontStyle:'italic', color:'#e8d5b0', marginBottom:4 })}>{editId ? 'Edit Restaurant' : 'Save a Restaurant'}</div>
+            <div style={s({ fontSize:12, color:'#5a4e3a', marginBottom:22 })}>{editId ? 'Update the details below.' : 'Screenshot a TikTok or Reel → upload it → Claude reads it ✨'}</div>
 
             <input ref={fileRef} type="file" accept="image/*" style={s({ display:'none' })} onChange={handleFile} />
 
-            {!preview && (
+            {!preview && !editId && (
               <div className={`dz${dragOver?' over':''}`}
                 onDragOver={e=>{e.preventDefault();setDragOver(true)}}
                 onDragLeave={()=>setDragOver(false)}
@@ -263,16 +274,16 @@ export default function App() {
               </div>
             )}
 
-            {status==='success' && <div style={s({ padding:'10px 14px', borderRadius:6, background:'rgba(74,222,128,.07)', border:'1px solid rgba(74,222,128,.2)', color:'#4ade80', fontSize:13, marginBottom:16 })}>✓ Detected! Edit anything below if needed.</div>}
-            {status==='warn'    && <div style={s({ padding:'10px 14px', borderRadius:6, background:'rgba(250,204,21,.07)', border:'1px solid rgba(250,204,21,.2)', color:'#facc15', fontSize:13, marginBottom:16 })}>⚠ Possible match — please double-check.</div>}
-            {status==='error'   && <div style={s({ padding:'10px 14px', borderRadius:6, background:'rgba(244,63,94,.07)', border:'1px solid rgba(244,63,94,.2)', color:'#f87191', fontSize:13, marginBottom:16 })}>Couldn't read it — fill in below manually.</div>}
+            {!editId && status==='success' && <div style={s({ padding:'10px 14px', borderRadius:6, background:'rgba(74,222,128,.07)', border:'1px solid rgba(74,222,128,.2)', color:'#4ade80', fontSize:13, marginBottom:16 })}>✓ Detected! Edit anything below if needed.</div>}
+            {!editId && status==='warn'    && <div style={s({ padding:'10px 14px', borderRadius:6, background:'rgba(250,204,21,.07)', border:'1px solid rgba(250,204,21,.2)', color:'#facc15', fontSize:13, marginBottom:16 })}>⚠ Possible match — please double-check.</div>}
+            {!editId && status==='error'   && <div style={s({ padding:'10px 14px', borderRadius:6, background:'rgba(244,63,94,.07)', border:'1px solid rgba(244,63,94,.2)', color:'#f87191', fontSize:13, marginBottom:16 })}>Couldn't read it — fill in below manually.</div>}
 
-            {preview && status!=='loading' && (
+            {(editId || (preview && status!=='loading')) && (
               <>
-                <div style={s({ borderTop:'1px solid #2a2520', margin:'16px 0' })} />
-                <div style={s({ fontSize:11, color:'#3a3228', textTransform:'uppercase', letterSpacing:1.5, marginBottom:14 })}>
+                {!editId && <div style={s({ borderTop:'1px solid #2a2520', margin:'16px 0' })} />}
+                {!editId && <div style={s({ fontSize:11, color:'#3a3228', textTransform:'uppercase', letterSpacing:1.5, marginBottom:14 })}>
                   {status==='success'||status==='warn' ? 'Auto-filled — edit if needed' : 'Fill in manually'}
-                </div>
+                </div>}
 
                 {[
                   ['Restaurant Name *', 'name', 'text', 'e.g. TAO Downtown'],
@@ -301,9 +312,9 @@ export default function App() {
                 </div>
 
                 <div style={s({ display:'flex', gap:10, marginTop:20, justifyContent:'flex-end' })}>
-                  <button onClick={()=>setShowForm(false)} style={s({ background:'transparent', border:'1px solid #2a2520', color:'#7a6e5f', padding:'9px 18px', borderRadius:4, fontFamily:"'DM Sans',sans-serif", fontSize:14, cursor:'pointer' })}>Cancel</button>
+                  <button onClick={closeForm} style={s({ background:'transparent', border:'1px solid #2a2520', color:'#7a6e5f', padding:'9px 18px', borderRadius:4, fontFamily:"'DM Sans',sans-serif", fontSize:14, cursor:'pointer' })}>Cancel</button>
                   <button onClick={save} disabled={!form.name} style={s({ background: form.name ? '#d4622a' : '#5a3020', border:'none', color:'#fff', padding:'9px 22px', borderRadius:4, fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:500, cursor: form.name ? 'pointer' : 'not-allowed' })}>
-                    Save Restaurant
+                    {editId ? 'Update Restaurant' : 'Save Restaurant'}
                   </button>
                 </div>
               </>
