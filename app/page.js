@@ -75,15 +75,31 @@ export default function App() {
 
   const closeForm = () => { setShowForm(false); setStatus('idle'); setPreview(null); setForm(BLANK); setEditId(null) }
 
+  const persist = (list) => {
+    fetch('/api/restaurants', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(list)
+    }).catch(() => {})
+  }
+
   const save = () => {
     if (!form.name) return
     if (editId) {
-      setRestaurants(p => p.map(r => r.id === editId ? { ...r, ...form } : r))
+      setRestaurants(p => {
+        const updated = p.map(r => r.id === editId ? { ...r, ...form } : r)
+        persist(updated)
+        return updated
+      })
       closeForm()
     } else {
       const id = Date.now()
       const { name, location } = form
-      setRestaurants(p => [...p, { ...form, id, visited: false, thumb: null, website: '' }])
+      setRestaurants(p => {
+        const updated = [...p, { ...form, id, visited: false, thumb: null, website: '', rating: null }]
+        persist(updated)
+        return updated
+      })
       closeForm()
 
       fetch('/api/places', {
@@ -91,31 +107,42 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, location })
       }).then(r => r.json()).then(data => {
-        setRestaurants(p => p.map(r => r.id === id
-          ? { ...r, thumb: data.photoName ? `/api/photo?name=${encodeURIComponent(data.photoName)}` : r.thumb, website: data.website ?? r.website, rating: data.rating ?? r.rating }
-          : r
-        ))
+        setRestaurants(p => {
+          const updated = p.map(r => r.id === id
+            ? { ...r, thumb: data.photoName ? `/api/photo?name=${encodeURIComponent(data.photoName)}` : r.thumb, website: data.website ?? r.website, rating: data.rating ?? r.rating }
+            : r
+          )
+          persist(updated)
+          return updated
+        })
       }).catch(() => {})
     }
   }
 
-  const toggleVisited = id => setRestaurants(p => p.map(r => r.id === id ? { ...r, visited: !r.visited } : r))
-  const del = id => setRestaurants(p => p.filter(r => r.id !== id))
+  const toggleVisited = id => {
+    setRestaurants(p => {
+      const updated = p.map(r => r.id === id ? { ...r, visited: !r.visited } : r)
+      persist(updated)
+      return updated
+    })
+  }
 
-  // Load from localStorage after mount (avoids SSR/client hydration mismatch)
+  const del = id => {
+    setRestaurants(p => {
+      const updated = p.filter(r => r.id !== id)
+      persist(updated)
+      return updated
+    })
+  }
+
+  // Load from database on mount
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('kfr_restaurants')
-      if (saved) setRestaurants(JSON.parse(saved).map(r => ({ rating: null, ...r })))
-    } catch {}
-    setInitialized(true)
+    fetch('/api/restaurants')
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data) && data.length) setRestaurants(data) })
+      .catch(() => {})
+      .finally(() => setInitialized(true))
   }, [])
-
-  // Save to localStorage only after initial load
-  useEffect(() => {
-    if (!initialized) return
-    localStorage.setItem('kfr_restaurants', JSON.stringify(restaurants))
-  }, [restaurants, initialized])
 
   // Fetch photos/data for restaurants missing a thumb, only after load
   useEffect(() => {
@@ -126,10 +153,14 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: r.name, location: r.location })
       }).then(res => res.json()).then(data => {
-        setRestaurants(p => p.map(rest => rest.id === r.id
-          ? { ...rest, thumb: data.photoName ? `/api/photo?name=${encodeURIComponent(data.photoName)}` : rest.thumb, website: data.website ?? rest.website, rating: data.rating ?? rest.rating }
-          : rest
-        ))
+        setRestaurants(p => {
+          const updated = p.map(rest => rest.id === r.id
+            ? { ...rest, thumb: data.photoName ? `/api/photo?name=${encodeURIComponent(data.photoName)}` : rest.thumb, website: data.website ?? rest.website, rating: data.rating ?? rest.rating }
+            : rest
+          )
+          persist(updated)
+          return updated
+        })
       }).catch(() => {})
     })
   }, [initialized])
