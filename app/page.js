@@ -2,7 +2,7 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 
 const CUISINES = ['All','Italian','Japanese','Mexican','Chinese','Indian','Thai','American','Mediterranean','Korean','French','Other']
-const PRICES = ['All','$','$$','$$$','$$$$']
+const PRICE_LEVELS = ['$','$$','$$$','$$$$']
 const VIBES = ['All','Date Night','Casual','Group Friendly','Trendy','Hidden Gem','Brunch Spot','Late Night']
 const BLANK = { name:'', cuisine:'Other', price:'$$', location:'', vibe:'Casual', notes:'', website:'' }
 
@@ -18,7 +18,7 @@ export default function App() {
   const [restaurants, setRestaurants] = useState(SAMPLE)
   const [initialized, setInitialized] = useState(false)
   const [showForm, setShowForm] = useState(false)
-  const [filters, setFilters] = useState({ cuisine:'All', price:'All', vibe:'All', visited:'All', rating:'All', search:'' })
+  const [filters, setFilters] = useState({ cuisine:'All', priceMin:1, priceMax:4, vibe:'All', visited:'All', rating:0, search:'' })
   const [form, setForm] = useState(BLANK)
   const [status, setStatus] = useState('idle') // idle | loading | success | warn | error
   const [preview, setPreview] = useState(null)
@@ -173,17 +173,17 @@ export default function App() {
 
   const filtered = useMemo(() => restaurants.filter(r => {
     if (filters.cuisine !== 'All' && r.cuisine !== filters.cuisine) return false
-    if (filters.price !== 'All' && r.price !== filters.price) return false
+    const pl = PRICE_LEVELS.indexOf(r.price) + 1
+    if (pl < filters.priceMin || pl > filters.priceMax) return false
     if (filters.vibe !== 'All' && r.vibe !== filters.vibe) return false
-    if (filters.visited === 'Visited' && !r.visited) return false
     if (filters.visited === 'Wishlist' && r.visited) return false
-    if (filters.rating !== 'All') {
-      const min = filters.rating.startsWith('5') ? 4.5 : parseFloat(filters.rating)
-      if (!r.rating || r.rating < min) return false
-    }
+    if (filters.rating > 0 && (!r.rating || r.rating < filters.rating)) return false
     const q = filters.search.toLowerCase()
     if (q && !r.name.toLowerCase().includes(q) && !r.location.toLowerCase().includes(q)) return false
     return true
+  }).sort((a, b) => {
+    if (a.visited !== b.visited) return a.visited ? 1 : -1
+    return a.name.localeCompare(b.name)
   }), [restaurants, filters])
 
   const s = (style) => style // passthrough for readability
@@ -226,7 +226,7 @@ export default function App() {
           </div>
 
           {/* Filter dropdowns */}
-          {[['cuisine','Cuisine',CUISINES],['price','Price',PRICES],['vibe','Vibe',VIBES]].map(([k,label,opts])=>(
+          {[['cuisine','Cuisine',CUISINES],['vibe','Vibe',VIBES]].map(([k,label,opts])=>(
             <div key={k} style={s({ marginBottom:12 })}>
               <div style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#999', textTransform:'uppercase', letterSpacing:1, marginBottom:6 })}>{label}</div>
               <select className="inp" style={s({ width:'100%', boxSizing:'border-box' })} value={filters[k]} onChange={e=>setFilters(f=>({...f,[k]:e.target.value}))}>
@@ -235,20 +235,53 @@ export default function App() {
             </div>
           ))}
 
-          {/* Status */}
+          {/* Hide Visited */}
           <div style={s({ marginBottom:12 })}>
-            <div style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#999', textTransform:'uppercase', letterSpacing:1, marginBottom:6 })}>Status</div>
-            <select className="inp" style={s({ width:'100%', boxSizing:'border-box' })} value={filters.visited} onChange={e=>setFilters(f=>({...f,visited:e.target.value}))}>
-              {['All','Wishlist','Visited'].map(v=><option key={v}>{v}</option>)}
-            </select>
+            <div style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#999', textTransform:'uppercase', letterSpacing:1, marginBottom:6 })}>Hide Visited?</div>
+            <button
+              onClick={()=>setFilters(f=>({...f,visited:f.visited==='Wishlist'?'All':'Wishlist'}))}
+              style={s({ width:'100%', padding:'8px 10px', borderRadius:8, border:'1.5px solid', cursor:'pointer', fontSize:13, fontFamily:"'DM Sans',sans-serif", transition:'all 0.15s', background: filters.visited==='Wishlist' ? '#ffd3b6' : 'white', borderColor: filters.visited==='Wishlist' ? '#ffb07a' : '#e0e0e0', color: filters.visited==='Wishlist' ? '#c45f00' : '#888' })}>
+              {filters.visited==='Wishlist' ? '★ Wishlist only' : 'Show all'}
+            </button>
+          </div>
+
+          {/* Price */}
+          <div style={s({ marginBottom:12 })}>
+            <div style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#999', textTransform:'uppercase', letterSpacing:1, marginBottom:10 })}>
+              Price — {PRICE_LEVELS[filters.priceMin - 1]} to {PRICE_LEVELS[filters.priceMax - 1]}
+            </div>
+            <div style={s({ position:'relative', height:20, marginBottom:6 })}>
+              {/* grey track */}
+              <div style={s({ position:'absolute', top:'50%', left:0, right:0, height:4, borderRadius:2, background:'#e0e0e0', transform:'translateY(-50%)' })} />
+              {/* green fill between thumbs */}
+              <div style={s({ position:'absolute', top:'50%', height:4, borderRadius:2, background:'#a8e6cf', transform:'translateY(-50%)', left:`${((filters.priceMin-1)/3)*100}%`, right:`${((4-filters.priceMax)/3)*100}%` })} />
+              <input className="dual-range" type="range" min="1" max="4" step="1"
+                value={filters.priceMin}
+                onChange={e=>{const v=parseInt(e.target.value);setFilters(f=>({...f,priceMin:Math.min(v,f.priceMax)}))}}
+              />
+              <input className="dual-range" type="range" min="1" max="4" step="1"
+                value={filters.priceMax}
+                onChange={e=>{const v=parseInt(e.target.value);setFilters(f=>({...f,priceMax:Math.max(v,f.priceMin)}))}}
+              />
+            </div>
+            <div style={s({ display:'flex', justifyContent:'space-between', fontSize:11, color:'#aaa', fontFamily:"'DM Sans',sans-serif" })}>
+              <span>$</span><span>$$$$</span>
+            </div>
           </div>
 
           {/* Rating */}
           <div>
-            <div style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#999', textTransform:'uppercase', letterSpacing:1, marginBottom:6 })}>Rating</div>
-            <select className="inp" style={s({ width:'100%', boxSizing:'border-box' })} value={filters.rating} onChange={e=>setFilters(f=>({...f,rating:e.target.value}))}>
-              {['All','5 ★','4+ ★','3+ ★'].map(v=><option key={v}>{v}</option>)}
-            </select>
+            <div style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#999', textTransform:'uppercase', letterSpacing:1, marginBottom:6 })}>
+              Rating{filters.rating > 0 ? ` — ${filters.rating}+ ★` : ' — Any'}
+            </div>
+            <input type="range" min="0" max="5" step="0.5"
+              value={filters.rating}
+              onChange={e=>setFilters(f=>({...f,rating:parseFloat(e.target.value)}))}
+              style={s({ width:'100%', accentColor:'#ffaaa5', cursor:'pointer' })}
+            />
+            <div style={s({ display:'flex', justifyContent:'space-between', fontSize:11, color:'#aaa', marginTop:2, fontFamily:"'DM Sans',sans-serif" })}>
+              <span>Any</span><span>5 ★</span>
+            </div>
           </div>
 
         </div>

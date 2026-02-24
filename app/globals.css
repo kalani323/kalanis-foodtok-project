@@ -27,3 +27,8 @@ body { background: #fff; color: #2d2d2d; font-family: 'DM Sans', sans-serif; }
 .tag { font-family: 'DM Sans', sans-serif; font-size: 11px; padding: 3px 9px; border-radius: 20px; }
 .btn { font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 6px 13px; border-radius: 4px; cursor: pointer; border: 1px solid; transition: all .15s; font-weight: 500; }
 select.inp option { background: #fff; }
+
+/* Dual range slider */
+.dual-range { position: absolute; width: 100%; height: 4px; appearance: none; background: transparent; pointer-events: none; outline: none; }
+.dual-range::-webkit-slider-thumb { appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 2px solid #a8e6cf; cursor: pointer; pointer-events: all; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+.dual-range::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 2px solid #a8e6cf; cursor: pointer; pointer-events: all; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
