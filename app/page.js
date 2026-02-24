@@ -11,7 +11,8 @@ const SAMPLE = [
   { id:2, name:'n/naka', cuisine:'Japanese', price:'$$$$', location:'Los Angeles, CA', vibe:'Date Night', notes:'Michelin-starred kaiseki — one of the hardest reservations in the country', visited:true, thumb:null, website:null, rating:null },
 ]
 
-const priceColor = p => ({ '$':'#4ade80','$$':'#facc15','$$$':'#f97316','$$$$':'#f43f5e' }[p] || '#ccc')
+const priceColor = p => ({ '$':'#2eaa72','$$':'#c49a0a','$$$':'#e87240','$$$$':'#ff8b94' }[p] || '#999')
+const priceBg    = p => ({ '$':'#d4f5e9','$$':'#fef3c0','$$$':'#ffe8d6','$$$$':'#ffe4e6' }[p] || '#f5f5f5')
 
 export default function App() {
   const [restaurants, setRestaurants] = useState(SAMPLE)
@@ -131,13 +132,13 @@ export default function App() {
   const s = (style) => style // passthrough for readability
 
   return (
-    <div style={s({ minHeight:'100vh', background:'#0f0e0c', color:'#f5f0e8' })}>
+    <div style={s({ minHeight:'100vh', background:'#fff', color:'#2d2d2d' })}>
       {/* Header */}
-      <div style={s({ background:'#0f0e0c', borderBottom:'1px solid #2a2520', padding:'18px 28px', display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:100 })}>
-        <div style={s({ fontFamily:"'Playfair Display',serif", fontSize:26, fontStyle:'italic', color:'#e8d5b0' })}>
-          Kalani's Favorite Restaurants
+      <div style={s({ background:'#fff', borderBottom:'1px solid #ebebeb', padding:'18px 28px', display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:100 })}>
+        <div style={s({ fontFamily:"'Cute Notes', cursive", fontSize:32, color:'#2d2d2d' })}>
+          kalani loves food
         </div>
-        <button onClick={openForm} style={s({ background:'#d4622a', color:'#fff', border:'none', padding:'10px 22px', borderRadius:4, fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:500, cursor:'pointer' })}>
+        <button onClick={openForm} style={s({ background:'#ff8b94', color:'#fff', border:'none', padding:'10px 22px', borderRadius:4, fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:500, cursor:'pointer' })}>
           + Add Restaurant
         </button>
       </div>
@@ -146,16 +147,16 @@ export default function App() {
       <div style={s({ display:'flex' })}>
 
         {/* Sidebar */}
-        <div style={s({ width:220, flexShrink:0, background:'#13110d', borderRight:'1px solid #2a2520', padding:'20px 16px', position:'sticky', top:67, height:'calc(100vh - 67px)', overflowY:'auto' })}>
+        <div style={s({ width:220, flexShrink:0, background:'#fafafa', borderRight:'1px solid #ebebeb', padding:'20px 16px', position:'sticky', top:67, height:'calc(100vh - 67px)', overflowY:'auto' })}>
 
           {/* Stats */}
           <div style={s({ marginBottom:24 })}>
-            <div style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#7a6e5f', textTransform:'uppercase', letterSpacing:1, marginBottom:10 })}>Stats</div>
+            <div style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#999', textTransform:'uppercase', letterSpacing:1, marginBottom:10 })}>Stats</div>
             <div style={s({ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 })}>
-              {[[restaurants.length,'Saved'],[restaurants.filter(r=>r.visited).length,'Visited'],[restaurants.filter(r=>!r.visited).length,'Wishlist'],[[...new Set(restaurants.map(r=>r.cuisine))].length,'Cuisines']].map(([n,l])=>(
-                <div key={l} style={s({ textAlign:'center', background:'#1a1813', border:'1px solid #2a2520', borderRadius:6, padding:'10px 6px' })}>
-                  <span style={s({ fontFamily:"'Playfair Display',serif", fontSize:22, color:'#e8d5b0', display:'block' })}>{n}</span>
-                  <span style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:10, color:'#7a6e5f', textTransform:'uppercase', letterSpacing:1 })}>{l}</span>
+              {[[restaurants.length,'Saved','#a8e6cf','#1a5940'],[restaurants.filter(r=>r.visited).length,'Visited','#dcedc1','#3a5a1a'],[restaurants.filter(r=>!r.visited).length,'Wishlist','#ffd3b6','#8a4a1a'],[[...new Set(restaurants.map(r=>r.cuisine))].length,'Cuisines','#ffaaa5','#8a2040']].map(([n,l,bg,tc])=>(
+                <div key={l} style={s({ textAlign:'center', background:bg, border:`1px solid ${bg}`, borderRadius:6, padding:'10px 6px' })}>
+                  <span style={s({ fontFamily:"'Playfair Display',serif", fontSize:22, color:tc, display:'block' })}>{n}</span>
+                  <span style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:10, color:tc, textTransform:'uppercase', letterSpacing:1, opacity:.75 })}>{l}</span>
                 </div>
               ))}
             </div>
@@ -163,14 +164,14 @@ export default function App() {
 
           {/* Search */}
           <div style={s({ marginBottom:16 })}>
-            <div style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#7a6e5f', textTransform:'uppercase', letterSpacing:1, marginBottom:6 })}>Search</div>
+            <div style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#999', textTransform:'uppercase', letterSpacing:1, marginBottom:6 })}>Search</div>
             <input className="inp" style={s({ width:'100%', boxSizing:'border-box' })} placeholder="Name or city…" value={filters.search} onChange={e=>setFilters(f=>({...f,search:e.target.value}))} />
           </div>
 
           {/* Filter dropdowns */}
           {[['cuisine','Cuisine',CUISINES],['price','Price',PRICES],['vibe','Vibe',VIBES]].map(([k,label,opts])=>(
             <div key={k} style={s({ marginBottom:12 })}>
-              <div style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#7a6e5f', textTransform:'uppercase', letterSpacing:1, marginBottom:6 })}>{label}</div>
+              <div style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#999', textTransform:'uppercase', letterSpacing:1, marginBottom:6 })}>{label}</div>
               <select className="inp" style={s({ width:'100%', boxSizing:'border-box' })} value={filters[k]} onChange={e=>setFilters(f=>({...f,[k]:e.target.value}))}>
                 {opts.map(o=><option key={o}>{o}</option>)}
               </select>
@@ -179,7 +180,7 @@ export default function App() {
 
           {/* Status */}
           <div style={s({ marginBottom:12 })}>
-            <div style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#7a6e5f', textTransform:'uppercase', letterSpacing:1, marginBottom:6 })}>Status</div>
+            <div style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#999', textTransform:'uppercase', letterSpacing:1, marginBottom:6 })}>Status</div>
             <select className="inp" style={s({ width:'100%', boxSizing:'border-box' })} value={filters.visited} onChange={e=>setFilters(f=>({...f,visited:e.target.value}))}>
               {['All','Wishlist','Visited'].map(v=><option key={v}>{v}</option>)}
             </select>
@@ -187,7 +188,7 @@ export default function App() {
 
           {/* Rating */}
           <div>
-            <div style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#7a6e5f', textTransform:'uppercase', letterSpacing:1, marginBottom:6 })}>Rating</div>
+            <div style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#999', textTransform:'uppercase', letterSpacing:1, marginBottom:6 })}>Rating</div>
             <select className="inp" style={s({ width:'100%', boxSizing:'border-box' })} value={filters.rating} onChange={e=>setFilters(f=>({...f,rating:e.target.value}))}>
               {['All','5 ★','4+ ★','3+ ★'].map(v=><option key={v}>{v}</option>)}
             </select>
@@ -199,34 +200,34 @@ export default function App() {
         <div style={s({ flex:1, minWidth:0 })}>
           <div style={s({ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:18, padding:'24px 28px' })}>
             {filtered.length===0 ? (
-              <div style={s({ textAlign:'center', padding:'80px 20px', color:'#4a4236', gridColumn:'1/-1' })}>
+              <div style={s({ textAlign:'center', padding:'80px 20px', color:'#bbb', gridColumn:'1/-1' })}>
                 <div style={s({ fontSize:44, marginBottom:14 })}>🍽️</div>
                 <div>No restaurants found</div>
               </div>
             ) : filtered.map(r=>(
               <div key={r.id} className="card" style={r.visited?{opacity:.6}:{}}>
-                <div style={s({ height:130, background:'linear-gradient(135deg,#1f1a14,#2a2016)', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden', borderBottom:'1px solid #2a2520' })}>
-                  {r.thumb ? <img src={r.thumb} alt={r.name} style={s({ width:'100%', height:'100%', objectFit:'cover', opacity:.7 })} /> : <span style={s({ fontSize:34, opacity:.35 })}>🍽️</span>}
-                  {r.visited && <span style={s({ position:'absolute', top:10, left:10, background:'#4ade80', color:'#0f0e0c', fontSize:10, padding:'3px 9px', borderRadius:20, fontWeight:600 })}>✓ Visited</span>}
+                <div style={s({ height:130, background:'linear-gradient(135deg,#ffd3b6,#ffaaa5)', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden', borderBottom:'1px solid #ebebeb' })}>
+                  {r.thumb ? <img src={r.thumb} alt={r.name} style={s({ width:'100%', height:'100%', objectFit:'cover' })} /> : <span style={s({ fontSize:34, opacity:.4 })}>🍽️</span>}
+                  {r.visited && <span style={s({ position:'absolute', top:10, left:10, background:'#a8e6cf', color:'#1a5940', fontSize:10, padding:'3px 9px', borderRadius:20, fontWeight:600 })}>✓ Visited</span>}
                 </div>
                 <div style={s({ padding:15 })}>
-                  <div style={s({ fontFamily:"'Playfair Display',serif", fontSize:20, color:'#e8d5b0', marginBottom:8 })}>{r.name}</div>
+                  <div style={s({ fontFamily:"'Playfair Display',serif", fontSize:20, color:'#2d2d2d', marginBottom:8 })}>{r.name}</div>
                   <div style={s({ display:'flex', gap:7, flexWrap:'wrap', marginBottom:9 })}>
-                    <span className="tag" style={s({ background:'#2a2016', color:'#c4a882', border:'1px solid #3a3228' })}>{r.cuisine}</span>
-                    <span className="tag" style={s({ fontWeight:600, background:'transparent', border:`1px solid ${priceColor(r.price)}55`, color:priceColor(r.price) })}>{r.price}</span>
-                    <span className="tag" style={s({ background:'#1a1f2a', color:'#82a8c4', border:'1px solid #283040' })}>{r.vibe}</span>
-                    {r.rating != null && <span className="tag" style={s({ background:'#2a1f0a', color:'#f59e0b', border:'1px solid #5a4020' })}>★ {r.rating}</span>}
+                    <span className="tag" style={s({ background:'#a8e6cf', color:'#1a5940', border:'1px solid #a8e6cf' })}>{r.cuisine}</span>
+                    <span className="tag" style={s({ fontWeight:600, background:priceBg(r.price), border:`1px solid ${priceBg(r.price)}`, color:priceColor(r.price) })}>{r.price}</span>
+                    <span className="tag" style={s({ background:'#dcedc1', color:'#3a5a1a', border:'1px solid #dcedc1' })}>{r.vibe}</span>
+                    {r.rating != null && <span className="tag" style={s({ background:'#ffd3b6', color:'#8a4a1a', border:'1px solid #ffd3b6' })}>★ {r.rating}</span>}
                   </div>
-                  {r.location && <div style={s({ fontSize:13, color:'#7a6e5f', marginBottom:7 })}>📍 {r.location}</div>}
-                  {r.notes && <div style={s({ fontSize:13, color:'#a09282', fontStyle:'italic', lineHeight:1.5, marginBottom:11 })}>"{r.notes}"</div>}
-                  {r.website && <a href={r.website} target="_blank" rel="noopener noreferrer" style={s({ display:'inline-block', fontSize:12, color:'#d4622a', textDecoration:'none', marginBottom:11 })}>🌐 Visit Website →</a>}
-                  <div style={s({ display:'flex', gap:7, paddingTop:11, borderTop:'1px solid #2a2520' })}>
+                  {r.location && <div style={s({ fontSize:13, color:'#888', marginBottom:7 })}>📍 {r.location}</div>}
+                  {r.notes && <div style={s({ fontSize:13, color:'#777', fontStyle:'italic', lineHeight:1.5, marginBottom:11 })}>"{r.notes}"</div>}
+                  {r.website && <a href={r.website} target="_blank" rel="noopener noreferrer" style={s({ display:'inline-block', fontSize:12, color:'#ff8b94', textDecoration:'none', marginBottom:11 })}>🌐 Visit Website →</a>}
+                  <div style={s({ display:'flex', gap:7, paddingTop:11, borderTop:'1px solid #ebebeb' })}>
                     {r.visited
-                      ? <button className="btn" style={s({ color:'#7a6e5f', borderColor:'#3a3228', background:'transparent' })} onClick={()=>toggleVisited(r.id)}>Unmark</button>
-                      : <button className="btn" style={s({ color:'#4ade80', borderColor:'#4ade80', background:'transparent' })} onClick={()=>toggleVisited(r.id)}>Mark Visited ✓</button>
+                      ? <button className="btn" style={s({ color:'#888', borderColor:'#ddd', background:'transparent' })} onClick={()=>toggleVisited(r.id)}>Unmark</button>
+                      : <button className="btn" style={s({ color:'#1a5940', borderColor:'#a8e6cf', background:'transparent' })} onClick={()=>toggleVisited(r.id)}>Mark Visited ✓</button>
                     }
-                    <button className="btn" style={s({ color:'#c4a882', borderColor:'#3a3228', background:'transparent', marginLeft:'auto' })} onClick={()=>openEdit(r)}>Edit</button>
-                    <button className="btn" style={s({ color:'#f43f5e', borderColor:'#f43f5e', background:'transparent' })} onClick={()=>del(r.id)}>Delete</button>
+                    <button className="btn" style={s({ color:'#555', borderColor:'#ddd', background:'transparent', marginLeft:'auto' })} onClick={()=>openEdit(r)}>Edit</button>
+                    <button className="btn" style={s({ color:'#ff8b94', borderColor:'#ff8b94', background:'transparent' })} onClick={()=>del(r.id)}>Delete</button>
                   </div>
                 </div>
               </div>
@@ -238,10 +239,10 @@ export default function App() {
 
       {/* Modal */}
       {showForm && (
-        <div onClick={e=>e.target===e.currentTarget&&closeForm()} style={s({ position:'fixed', inset:0, background:'rgba(0,0,0,.9)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:200, padding:16 })}>
-          <div style={s({ background:'#1a1813', border:'1px solid #2a2520', borderRadius:10, padding:28, width:'100%', maxWidth:480, maxHeight:'92vh', overflowY:'auto' })}>
-            <div style={s({ fontFamily:"'Playfair Display',serif", fontSize:22, fontStyle:'italic', color:'#e8d5b0', marginBottom:4 })}>{editId ? 'Edit Restaurant' : 'Save a Restaurant'}</div>
-            <div style={s({ fontSize:12, color:'#5a4e3a', marginBottom:22 })}>{editId ? 'Update the details below.' : 'Screenshot a TikTok or Reel → upload it → Claude reads it ✨'}</div>
+        <div onClick={e=>e.target===e.currentTarget&&closeForm()} style={s({ position:'fixed', inset:0, background:'rgba(0,0,0,.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:200, padding:16 })}>
+          <div style={s({ background:'#fff', border:'1px solid #ebebeb', borderRadius:10, padding:28, width:'100%', maxWidth:480, maxHeight:'92vh', overflowY:'auto', boxShadow:'0 20px 60px rgba(0,0,0,.15)' })}>
+            <div style={s({ fontFamily:"'Playfair Display',serif", fontSize:22, fontStyle:'italic', color:'#2d2d2d', marginBottom:4 })}>{editId ? 'Edit Restaurant' : 'Save a Restaurant'}</div>
+            <div style={s({ fontSize:12, color:'#999', marginBottom:22 })}>{editId ? 'Update the details below.' : 'Screenshot a TikTok or Reel → upload it → Claude reads it ✨'}</div>
 
             <input ref={fileRef} type="file" accept="image/*" style={s({ display:'none' })} onChange={handleFile} />
 
@@ -253,37 +254,37 @@ export default function App() {
                 onClick={()=>fileRef.current?.click()}
               >
                 <div style={s({ fontSize:36, marginBottom:10 })}>📸</div>
-                <div style={s({ fontSize:14, color:'#a09282', lineHeight:1.6 })}><strong style={s({ color:'#e8d5b0' })}>Tap to upload a screenshot</strong><br/>from TikTok or Instagram</div>
-                <div style={s({ fontSize:12, color:'#4a4236', marginTop:8 })}>On mobile: screenshot the video, then upload from camera roll</div>
+                <div style={s({ fontSize:14, color:'#888', lineHeight:1.6 })}><strong style={s({ color:'#2d2d2d' })}>Tap to upload a screenshot</strong><br/>from TikTok or Instagram</div>
+                <div style={s({ fontSize:12, color:'#bbb', marginTop:8 })}>On mobile: screenshot the video, then upload from camera roll</div>
               </div>
             )}
 
             {preview && (
-              <div style={s({ position:'relative', borderRadius:8, overflow:'hidden', border:'1px solid #2a2520', marginBottom:16 })}>
+              <div style={s({ position:'relative', borderRadius:8, overflow:'hidden', border:'1px solid #ebebeb', marginBottom:16 })}>
                 <img src={preview} alt="screenshot" style={s({ width:'100%', maxHeight:220, objectFit:'cover', display:'block' })} />
                 {status==='loading' && (
-                  <div style={s({ position:'absolute', inset:0, background:'rgba(0,0,0,.65)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12 })}>
-                    <div style={s({ width:28, height:28, border:'3px solid rgba(255,255,255,.15)', borderTopColor:'#d4622a', borderRadius:'50%', animation:'spin .75s linear infinite' })} />
-                    <div style={s({ fontSize:13, color:'rgba(255,255,255,.7)' })}>Reading screenshot…</div>
+                  <div style={s({ position:'absolute', inset:0, background:'rgba(0,0,0,.6)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12 })}>
+                    <div style={s({ width:28, height:28, border:'3px solid rgba(255,255,255,.2)', borderTopColor:'#ff8b94', borderRadius:'50%', animation:'spin .75s linear infinite' })} />
+                    <div style={s({ fontSize:13, color:'rgba(255,255,255,.9)' })}>Reading screenshot…</div>
                   </div>
                 )}
                 {status!=='loading' && (
                   <button onClick={()=>{setPreview(null);setStatus('idle');setForm(BLANK);setTimeout(()=>fileRef.current?.click(),50)}}
-                    style={s({ position:'absolute', top:9, right:9, background:'rgba(0,0,0,.75)', border:'1px solid #3a3228', color:'#c4a882', fontFamily:"'DM Sans',sans-serif", fontSize:11, padding:'4px 11px', borderRadius:20, cursor:'pointer' })}>
+                    style={s({ position:'absolute', top:9, right:9, background:'rgba(0,0,0,.6)', border:'none', color:'#fff', fontFamily:"'DM Sans',sans-serif", fontSize:11, padding:'4px 11px', borderRadius:20, cursor:'pointer' })}>
                     Change photo
                   </button>
                 )}
               </div>
             )}
 
-            {!editId && status==='success' && <div style={s({ padding:'10px 14px', borderRadius:6, background:'rgba(74,222,128,.07)', border:'1px solid rgba(74,222,128,.2)', color:'#4ade80', fontSize:13, marginBottom:16 })}>✓ Detected! Edit anything below if needed.</div>}
-            {!editId && status==='warn'    && <div style={s({ padding:'10px 14px', borderRadius:6, background:'rgba(250,204,21,.07)', border:'1px solid rgba(250,204,21,.2)', color:'#facc15', fontSize:13, marginBottom:16 })}>⚠ Possible match — please double-check.</div>}
-            {!editId && status==='error'   && <div style={s({ padding:'10px 14px', borderRadius:6, background:'rgba(244,63,94,.07)', border:'1px solid rgba(244,63,94,.2)', color:'#f87191', fontSize:13, marginBottom:16 })}>Couldn't read it — fill in below manually.</div>}
+            {!editId && status==='success' && <div style={s({ padding:'10px 14px', borderRadius:6, background:'rgba(168,230,207,.25)', border:'1px solid #a8e6cf', color:'#1a5940', fontSize:13, marginBottom:16 })}>✓ Detected! Edit anything below if needed.</div>}
+            {!editId && status==='warn'    && <div style={s({ padding:'10px 14px', borderRadius:6, background:'rgba(255,211,182,.35)', border:'1px solid #ffd3b6', color:'#8a4a1a', fontSize:13, marginBottom:16 })}>⚠ Possible match — please double-check.</div>}
+            {!editId && status==='error'   && <div style={s({ padding:'10px 14px', borderRadius:6, background:'rgba(255,170,165,.25)', border:'1px solid #ffaaa5', color:'#8a2040', fontSize:13, marginBottom:16 })}>Couldn't read it — fill in below manually.</div>}
 
             {(editId || (preview && status!=='loading')) && (
               <>
-                {!editId && <div style={s({ borderTop:'1px solid #2a2520', margin:'16px 0' })} />}
-                {!editId && <div style={s({ fontSize:11, color:'#3a3228', textTransform:'uppercase', letterSpacing:1.5, marginBottom:14 })}>
+                {!editId && <div style={s({ borderTop:'1px solid #ebebeb', margin:'16px 0' })} />}
+                {!editId && <div style={s({ fontSize:11, color:'#ccc', textTransform:'uppercase', letterSpacing:1.5, marginBottom:14 })}>
                   {status==='success'||status==='warn' ? 'Auto-filled — edit if needed' : 'Fill in manually'}
                 </div>}
 
@@ -292,7 +293,7 @@ export default function App() {
                   ['Location', 'location', 'text', 'e.g. New York, NY'],
                 ].map(([label, key, type, ph])=>(
                   <div key={key} style={s({ marginBottom:14 })}>
-                    <label style={s({ display:'block', fontSize:11, color:'#7a6e5f', textTransform:'uppercase', letterSpacing:1, marginBottom:5 })}>{label}</label>
+                    <label style={s({ display:'block', fontSize:11, color:'#999', textTransform:'uppercase', letterSpacing:1, marginBottom:5 })}>{label}</label>
                     <input className="fi" type={type} placeholder={ph} value={form[key]} onChange={e=>setForm(f=>({...f,[key]:e.target.value}))} />
                   </div>
                 ))}
@@ -300,7 +301,7 @@ export default function App() {
                 <div style={s({ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:14 })}>
                   {[['Cuisine','cuisine',CUISINES.slice(1)],['Price','price',['$','$$','$$$','$$$$']],['Vibe','vibe',VIBES.slice(1)]].map(([label,key,opts])=>(
                     <div key={key} style={s({ gridColumn: key==='vibe' ? '1/-1' : 'auto' })}>
-                      <label style={s({ display:'block', fontSize:11, color:'#7a6e5f', textTransform:'uppercase', letterSpacing:1, marginBottom:5 })}>{label}</label>
+                      <label style={s({ display:'block', fontSize:11, color:'#999', textTransform:'uppercase', letterSpacing:1, marginBottom:5 })}>{label}</label>
                       <select className="fi" value={form[key]} onChange={e=>setForm(f=>({...f,[key]:e.target.value}))}>
                         {opts.map(o=><option key={o}>{o}</option>)}
                       </select>
@@ -309,13 +310,13 @@ export default function App() {
                 </div>
 
                 <div style={s({ marginBottom:14 })}>
-                  <label style={s({ display:'block', fontSize:11, color:'#7a6e5f', textTransform:'uppercase', letterSpacing:1, marginBottom:5 })}>Notes</label>
+                  <label style={s({ display:'block', fontSize:11, color:'#999', textTransform:'uppercase', letterSpacing:1, marginBottom:5 })}>Notes</label>
                   <textarea className="ft" placeholder="Must-order dishes, reservation tips…" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} />
                 </div>
 
                 <div style={s({ display:'flex', gap:10, marginTop:20, justifyContent:'flex-end' })}>
-                  <button onClick={closeForm} style={s({ background:'transparent', border:'1px solid #2a2520', color:'#7a6e5f', padding:'9px 18px', borderRadius:4, fontFamily:"'DM Sans',sans-serif", fontSize:14, cursor:'pointer' })}>Cancel</button>
-                  <button onClick={save} disabled={!form.name} style={s({ background: form.name ? '#d4622a' : '#5a3020', border:'none', color:'#fff', padding:'9px 22px', borderRadius:4, fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:500, cursor: form.name ? 'pointer' : 'not-allowed' })}>
+                  <button onClick={closeForm} style={s({ background:'transparent', border:'1px solid #ddd', color:'#888', padding:'9px 18px', borderRadius:4, fontFamily:"'DM Sans',sans-serif", fontSize:14, cursor:'pointer' })}>Cancel</button>
+                  <button onClick={save} disabled={!form.name} style={s({ background: form.name ? '#ff8b94' : '#ffaaa5', border:'none', color:'#fff', padding:'9px 22px', borderRadius:4, fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:500, cursor: form.name ? 'pointer' : 'not-allowed' })}>
                     {editId ? 'Update Restaurant' : 'Save Restaurant'}
                   </button>
                 </div>

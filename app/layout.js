@@ -1,7 +1,7 @@
 import './globals.css'
 
 export const metadata = {
-  title: "Kalani's Favorite Restaurants",
+  title: "kalani loves food",
   description: 'Save restaurants from TikTok & Instagram',
 }
 
