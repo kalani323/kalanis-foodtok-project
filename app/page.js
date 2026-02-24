@@ -26,14 +26,34 @@ export default function App() {
   const [editId, setEditId] = useState(null)
   const fileRef = useRef()
 
+  const compressImage = (file) => new Promise((resolve) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      const maxDim = 1200
+      let { width, height } = img
+      if (width > maxDim || height > maxDim) {
+        if (width > height) { height = Math.round(height * maxDim / width); width = maxDim }
+        else { width = Math.round(width * maxDim / height); height = maxDim }
+      }
+      const canvas = document.createElement('canvas')
+      canvas.width = width; canvas.height = height
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height)
+      URL.revokeObjectURL(url)
+      canvas.toBlob(resolve, 'image/jpeg', 0.85)
+    }
+    img.src = url
+  })
+
   const analyze = useCallback(async (file) => {
     if (!file || !file.type.startsWith('image/')) return
     setPreview(URL.createObjectURL(file))
     setStatus('loading')
     setForm(BLANK)
 
+    const compressed = await compressImage(file)
     const fd = new FormData()
-    fd.append('image', file)
+    fd.append('image', compressed, 'image.jpg')
 
     try {
       const res = await fetch('/api/detect', { method: 'POST', body: fd })
