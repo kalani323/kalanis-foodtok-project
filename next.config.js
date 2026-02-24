@@ -1,5 +1,3 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  serverExternalPackages: ['sharp'],
-}
+const nextConfig = {}
 module.exports = nextConfig

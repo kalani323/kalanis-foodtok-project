@@ -1,16 +1,9 @@
 import Anthropic from '@anthropic-ai/sdk'
-import sharp from 'sharp'
+
+export const maxDuration = 60
 
 const CUISINES = ['Italian','Japanese','Mexican','Chinese','Indian','Thai','American','Mediterranean','Korean','French','Other']
 const VIBES = ['Date Night','Casual','Group Friendly','Trendy','Hidden Gem','Brunch Spot','Late Night']
-
-async function compressImage(buffer) {
-  // Resize to max 1200px wide, convert to jpeg at 85% quality
-  return await sharp(buffer)
-    .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
-    .jpeg({ quality: 85 })
-    .toBuffer()
-}
 
 export async function POST(request) {
   const apiKey = process.env.ANTHROPIC_API_KEY
@@ -26,14 +19,14 @@ export async function POST(request) {
 
   if (!file) return Response.json({ error: 'No image provided' }, { status: 400 })
 
-  let base64
+  let base64, mediaType
   try {
     const bytes = await file.arrayBuffer()
-    const compressed = await compressImage(Buffer.from(bytes))
-    base64 = compressed.toString('base64')
-    console.log(`Image compressed: ${file.size} → ${compressed.length} bytes`)
+    base64 = Buffer.from(bytes).toString('base64')
+    const type = file.type || ''
+    mediaType = ['image/jpeg','image/png','image/gif','image/webp'].includes(type) ? type : 'image/jpeg'
   } catch (err) {
-    console.error('Compression failed:', err.message)
+    console.error('Image read failed:', err.message)
     return Response.json({ error: 'Image processing failed' }, { status: 500 })
   }
 
@@ -52,7 +45,7 @@ If no restaurant is identifiable, respond with: {"error":"not found"}`,
       messages: [{
         role: 'user',
         content: [
-          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
+          { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
           { type: 'text', text: 'What restaurant is featured in this screenshot? Extract all details.' }
         ]
       }]
