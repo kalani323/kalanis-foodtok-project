@@ -24,6 +24,7 @@ export default function App() {
   const [preview, setPreview] = useState(null)
   const [dragOver, setDragOver] = useState(false)
   const [editId, setEditId] = useState(null)
+  const [showHelp, setShowHelp] = useState(true)
   const fileRef = useRef()
 
   const compressImage = (file) => new Promise((resolve) => {
@@ -195,9 +196,14 @@ export default function App() {
         <div style={s({ fontFamily:"'Cute Notes', cursive", fontSize:32, color:'#2d2d2d' })}>
           kalani loves food
         </div>
-        <button onClick={openForm} style={s({ background:'#ff8b94', color:'#fff', border:'none', padding:'10px 22px', borderRadius:4, fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:500, cursor:'pointer' })}>
-          + Add Restaurant
-        </button>
+        <div style={s({ display:'flex', gap:10 })}>
+          <button onClick={openForm} style={s({ background:'#ff8b94', color:'#fff', border:'none', padding:'10px 22px', borderRadius:4, fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:500, cursor:'pointer' })}>
+            + Add Restaurant
+          </button>
+          <button onClick={()=>setShowHelp(true)} style={s({ background:'transparent', border:'1px solid #ddd', color:'#888', padding:'10px 16px', borderRadius:4, fontFamily:"'DM Sans',sans-serif", fontSize:14, cursor:'pointer' })}>
+            ?
+          </button>
+        </div>
       </div>
 
       {/* Body */}
@@ -412,6 +418,44 @@ export default function App() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Help Modal */}
+      {showHelp && (
+        <div onClick={e=>e.target===e.currentTarget&&setShowHelp(false)} style={s({ position:'fixed', inset:0, background:'rgba(0,0,0,.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:200, padding:16 })}>
+          <div style={s({ background:'#fff', border:'1px solid #ebebeb', borderRadius:10, padding:28, width:'100%', maxWidth:460, maxHeight:'92vh', overflowY:'auto', boxShadow:'0 20px 60px rgba(0,0,0,.15)' })}>
+            <div style={s({ fontFamily:"'Cute Notes', cursive", fontSize:28, color:'#2d2d2d', marginBottom:4 })}>kalani loves food</div>
+            <div style={s({ fontSize:13, color:'#999', marginBottom:18, fontFamily:"'DM Sans',sans-serif" })}>your personal restaurant bucket list</div>
+
+            <div style={s({ fontSize:14, color:'#2d2d2d', fontFamily:"'DM Sans',sans-serif", lineHeight:1.8 })}>
+              <div style={s({ fontWeight:600, marginBottom:6, color:'#ff8b94' })}>How it works</div>
+              <div style={s({ marginBottom:14 })}>
+                <strong>1.</strong> Screenshot a restaurant from TikTok or Instagram<br/>
+                <strong>2.</strong> Upload it — AI reads the name, cuisine, price & vibe<br/>
+                <strong>3.</strong> Edit details, add notes, and save it to your list
+              </div>
+
+              <div style={s({ fontWeight:600, marginBottom:6, color:'#ff8b94' })}>Features</div>
+              <div style={s({ marginBottom:14 })}>
+                <strong>Google Places:</strong> Automatically fetches ratings, photos & website links<br/>
+                <strong>Filters & search:</strong> Filter by cuisine, price, vibe, rating — or just search<br/>
+                <strong>Mark as visited:</strong> Check off restaurants you've been to<br/>
+                <strong>Syncs everywhere:</strong> Your list saves across all your devices
+              </div>
+
+              <div style={s({ fontWeight:600, marginBottom:6, color:'#ff8b94' })}>Why you need this</div>
+              <div>
+                Stop losing restaurant recs in your camera roll. Every TikTok find, friend suggestion, and "we have to go there" moment — saved in one place, ready for when you're hungry.
+              </div>
+            </div>
+
+            <div style={s({ marginTop:20, textAlign:'right' })}>
+              <button onClick={()=>setShowHelp(false)} style={s({ background:'#ff8b94', color:'#fff', border:'none', padding:'9px 22px', borderRadius:4, fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:500, cursor:'pointer' })}>
+                Got it!
+              </button>
+            </div>
           </div>
         </div>
       )}
