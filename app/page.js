@@ -1,14 +1,14 @@
 'use client'
-import { useState, useMemo, useRef, useCallback } from 'react'
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 
 const CUISINES = ['All','Italian','Japanese','Mexican','Chinese','Indian','Thai','American','Mediterranean','Korean','French','Other']
 const PRICES = ['All','$','$$','$$$','$$$$']
 const VIBES = ['All','Date Night','Casual','Group Friendly','Trendy','Hidden Gem','Brunch Spot','Late Night']
-const BLANK = { name:'', cuisine:'Other', price:'$$', location:'', vibe:'Casual', notes:'' }
+const BLANK = { name:'', cuisine:'Other', price:'$$', location:'', vibe:'Casual', notes:'', website:'' }
 
 const SAMPLE = [
-  { id:1, name:'Carbone', cuisine:'Italian', price:'$$$', location:'New York, NY', vibe:'Date Night', notes:'Famous spicy rigatoni — reservations open exactly 30 days in advance', visited:false, thumb:null },
-  { id:2, name:'n/naka', cuisine:'Japanese', price:'$$$$', location:'Los Angeles, CA', vibe:'Date Night', notes:'Michelin-starred kaiseki — one of the hardest reservations in the country', visited:true, thumb:null },
+  { id:1, name:'Carbone', cuisine:'Italian', price:'$$$', location:'New York, NY', vibe:'Date Night', notes:'Famous spicy rigatoni — reservations open exactly 30 days in advance', visited:false, thumb:null, website:null },
+  { id:2, name:'n/naka', cuisine:'Japanese', price:'$$$$', location:'Los Angeles, CA', vibe:'Date Night', notes:'Michelin-starred kaiseki — one of the hardest reservations in the country', visited:true, thumb:null, website:null },
 ]
 
 const priceColor = p => ({ '$':'#4ade80','$$':'#facc15','$$$':'#f97316','$$$$':'#f43f5e' }[p] || '#ccc')
@@ -50,12 +50,40 @@ export default function App() {
 
   const save = () => {
     if (!form.name) return
-    setRestaurants(p => [...p, { ...form, id: Date.now(), visited: false, thumb: preview }])
+    const id = Date.now()
+    const { name, location } = form
+    setRestaurants(p => [...p, { ...form, id, visited: false, thumb: null, website: '' }])
     setShowForm(false); setStatus('idle'); setPreview(null); setForm(BLANK)
+
+    fetch('/api/places', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, location })
+    }).then(r => r.json()).then(data => {
+      setRestaurants(p => p.map(r => r.id === id
+        ? { ...r, thumb: data.photoName ? `/api/photo?name=${encodeURIComponent(data.photoName)}` : r.thumb, website: data.website ?? r.website }
+        : r
+      ))
+    }).catch(() => {})
   }
 
   const toggleVisited = id => setRestaurants(p => p.map(r => r.id === id ? { ...r, visited: !r.visited } : r))
   const del = id => setRestaurants(p => p.filter(r => r.id !== id))
+
+  useEffect(() => {
+    SAMPLE.forEach(r => {
+      fetch('/api/places', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: r.name, location: r.location })
+      }).then(res => res.json()).then(data => {
+        setRestaurants(p => p.map(rest => rest.id === r.id
+          ? { ...rest, thumb: data.photoName ? `/api/photo?name=${encodeURIComponent(data.photoName)}` : rest.thumb, website: data.website ?? rest.website }
+          : rest
+        ))
+      }).catch(() => {})
+    })
+  }, [])
 
   const filtered = useMemo(() => restaurants.filter(r => {
     if (filters.cuisine !== 'All' && r.cuisine !== filters.cuisine) return false
@@ -169,6 +197,7 @@ export default function App() {
                   </div>
                   {r.location && <div style={s({ fontSize:13, color:'#7a6e5f', marginBottom:7 })}>📍 {r.location}</div>}
                   {r.notes && <div style={s({ fontSize:13, color:'#a09282', fontStyle:'italic', lineHeight:1.5, marginBottom:11 })}>"{r.notes}"</div>}
+                  {r.website && <a href={r.website} target="_blank" rel="noopener noreferrer" style={s({ display:'inline-block', fontSize:12, color:'#d4622a', textDecoration:'none', marginBottom:11 })}>🌐 Visit Website →</a>}
                   <div style={s({ display:'flex', gap:7, paddingTop:11, borderTop:'1px solid #2a2520' })}>
                     {r.visited
                       ? <button className="btn" style={s({ color:'#7a6e5f', borderColor:'#3a3228', background:'transparent' })} onClick={()=>toggleVisited(r.id)}>Unmark</button>
