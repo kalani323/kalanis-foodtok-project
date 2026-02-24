@@ -7,22 +7,17 @@ const VIBES = ['All','Date Night','Casual','Group Friendly','Trendy','Hidden Gem
 const BLANK = { name:'', cuisine:'Other', price:'$$', location:'', vibe:'Casual', notes:'', website:'' }
 
 const SAMPLE = [
-  { id:1, name:'Carbone', cuisine:'Italian', price:'$$$', location:'New York, NY', vibe:'Date Night', notes:'Famous spicy rigatoni — reservations open exactly 30 days in advance', visited:false, thumb:null, website:null },
-  { id:2, name:'n/naka', cuisine:'Japanese', price:'$$$$', location:'Los Angeles, CA', vibe:'Date Night', notes:'Michelin-starred kaiseki — one of the hardest reservations in the country', visited:true, thumb:null, website:null },
+  { id:1, name:'Carbone', cuisine:'Italian', price:'$$$', location:'New York, NY', vibe:'Date Night', notes:'Famous spicy rigatoni — reservations open exactly 30 days in advance', visited:false, thumb:null, website:null, rating:null },
+  { id:2, name:'n/naka', cuisine:'Japanese', price:'$$$$', location:'Los Angeles, CA', vibe:'Date Night', notes:'Michelin-starred kaiseki — one of the hardest reservations in the country', visited:true, thumb:null, website:null, rating:null },
 ]
 
 const priceColor = p => ({ '$':'#4ade80','$$':'#facc15','$$$':'#f97316','$$$$':'#f43f5e' }[p] || '#ccc')
 
 export default function App() {
-  const [restaurants, setRestaurants] = useState(() => {
-    if (typeof window === 'undefined') return SAMPLE
-    try {
-      const saved = localStorage.getItem('kfr_restaurants')
-      return saved ? JSON.parse(saved) : SAMPLE
-    } catch { return SAMPLE }
-  })
+  const [restaurants, setRestaurants] = useState(SAMPLE)
+  const [initialized, setInitialized] = useState(false)
   const [showForm, setShowForm] = useState(false)
-  const [filters, setFilters] = useState({ cuisine:'All', price:'All', vibe:'All', visited:'All', search:'' })
+  const [filters, setFilters] = useState({ cuisine:'All', price:'All', vibe:'All', visited:'All', rating:'All', search:'' })
   const [form, setForm] = useState(BLANK)
   const [status, setStatus] = useState('idle') // idle | loading | success | warn | error
   const [preview, setPreview] = useState(null)
@@ -55,7 +50,7 @@ export default function App() {
 
   const openForm = () => { setForm(BLANK); setStatus('idle'); setPreview(null); setEditId(null); setShowForm(true) }
 
-  const openEdit = (r) => { setForm({ name: r.name, cuisine: r.cuisine, price: r.price, location: r.location, vibe: r.vibe, notes: r.notes || '', website: r.website || '' }); setPreview(null); setStatus('idle'); setEditId(r.id); setShowForm(true) }
+  const openEdit = (r) => { setForm({ name: r.name, cuisine: r.cuisine, price: r.price, location: r.location, vibe: r.vibe, notes: r.notes || '', website: r.website || '', rating: r.rating || '' }); setPreview(null); setStatus('idle'); setEditId(r.id); setShowForm(true) }
 
   const closeForm = () => { setShowForm(false); setStatus('idle'); setPreview(null); setForm(BLANK); setEditId(null) }
 
@@ -76,7 +71,7 @@ export default function App() {
         body: JSON.stringify({ name, location })
       }).then(r => r.json()).then(data => {
         setRestaurants(p => p.map(r => r.id === id
-          ? { ...r, thumb: data.photoName ? `/api/photo?name=${encodeURIComponent(data.photoName)}` : r.thumb, website: data.website ?? r.website }
+          ? { ...r, thumb: data.photoName ? `/api/photo?name=${encodeURIComponent(data.photoName)}` : r.thumb, website: data.website ?? r.website, rating: data.rating ?? r.rating }
           : r
         ))
       }).catch(() => {})
@@ -86,11 +81,24 @@ export default function App() {
   const toggleVisited = id => setRestaurants(p => p.map(r => r.id === id ? { ...r, visited: !r.visited } : r))
   const del = id => setRestaurants(p => p.filter(r => r.id !== id))
 
+  // Load from localStorage after mount (avoids SSR/client hydration mismatch)
   useEffect(() => {
-    localStorage.setItem('kfr_restaurants', JSON.stringify(restaurants))
-  }, [restaurants])
+    try {
+      const saved = localStorage.getItem('kfr_restaurants')
+      if (saved) setRestaurants(JSON.parse(saved).map(r => ({ rating: null, ...r })))
+    } catch {}
+    setInitialized(true)
+  }, [])
 
+  // Save to localStorage only after initial load
   useEffect(() => {
+    if (!initialized) return
+    localStorage.setItem('kfr_restaurants', JSON.stringify(restaurants))
+  }, [restaurants, initialized])
+
+  // Fetch photos/data for restaurants missing a thumb, only after load
+  useEffect(() => {
+    if (!initialized) return
     restaurants.filter(r => !r.thumb).forEach(r => {
       fetch('/api/places', {
         method: 'POST',
@@ -98,12 +106,12 @@ export default function App() {
         body: JSON.stringify({ name: r.name, location: r.location })
       }).then(res => res.json()).then(data => {
         setRestaurants(p => p.map(rest => rest.id === r.id
-          ? { ...rest, thumb: data.photoName ? `/api/photo?name=${encodeURIComponent(data.photoName)}` : rest.thumb, website: data.website ?? rest.website }
+          ? { ...rest, thumb: data.photoName ? `/api/photo?name=${encodeURIComponent(data.photoName)}` : rest.thumb, website: data.website ?? rest.website, rating: data.rating ?? rest.rating }
           : rest
         ))
       }).catch(() => {})
     })
-  }, [])
+  }, [initialized])
 
   const filtered = useMemo(() => restaurants.filter(r => {
     if (filters.cuisine !== 'All' && r.cuisine !== filters.cuisine) return false
@@ -111,6 +119,10 @@ export default function App() {
     if (filters.vibe !== 'All' && r.vibe !== filters.vibe) return false
     if (filters.visited === 'Visited' && !r.visited) return false
     if (filters.visited === 'Wishlist' && r.visited) return false
+    if (filters.rating !== 'All') {
+      const min = filters.rating.startsWith('5') ? 4.5 : parseFloat(filters.rating)
+      if (!r.rating || r.rating < min) return false
+    }
     const q = filters.search.toLowerCase()
     if (q && !r.name.toLowerCase().includes(q) && !r.location.toLowerCase().includes(q)) return false
     return true
@@ -120,25 +132,6 @@ export default function App() {
 
   return (
     <div style={s({ minHeight:'100vh', background:'#0f0e0c', color:'#f5f0e8' })}>
-      <style>{`
-        @keyframes spin{to{transform:rotate(360deg)}}
-        @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-        .card{background:#1a1813;border:1px solid #2a2520;border-radius:8px;overflow:hidden;transition:transform .18s,border-color .18s;animation:fadeUp .3s ease;}
-        .card:hover{transform:translateY(-3px);border-color:#3a3228;}
-        .inp{background:#1a1813;border:1px solid #2a2520;color:#f5f0e8;padding:8px 12px;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;}
-        .inp::placeholder{color:#4a4236;}
-        .inp:focus{border-color:#d4622a;}
-        .fi{width:100%;background:#0f0e0c;border:1px solid #2a2520;color:#f5f0e8;padding:9px 13px;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .15s;}
-        .fi:focus{border-color:#d4622a;}
-        .ft{width:100%;background:#0f0e0c;border:1px solid #2a2520;color:#f5f0e8;padding:9px 13px;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;resize:vertical;min-height:68px;transition:border-color .15s;}
-        .ft:focus{border-color:#d4622a;}
-        .dz{border:2px dashed #2e2820;border-radius:8px;padding:36px 20px;text-align:center;cursor:pointer;transition:all .2s;}
-        .dz:hover,.dz.over{border-color:#d4622a;background:rgba(212,98,42,.04);}
-        .tag{font-family:'DM Sans',sans-serif;font-size:11px;padding:3px 9px;border-radius:20px;}
-        .btn{font-family:'DM Sans',sans-serif;font-size:12px;padding:6px 13px;border-radius:4px;cursor:pointer;border:1px solid;transition:all .15s;font-weight:500;}
-        select.inp option{background:#1a1813;}
-      `}</style>
-
       {/* Header */}
       <div style={s({ background:'#0f0e0c', borderBottom:'1px solid #2a2520', padding:'18px 28px', display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:100 })}>
         <div style={s({ fontFamily:"'Playfair Display',serif", fontSize:26, fontStyle:'italic', color:'#e8d5b0' })}>
@@ -185,10 +178,18 @@ export default function App() {
           ))}
 
           {/* Status */}
-          <div>
+          <div style={s({ marginBottom:12 })}>
             <div style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#7a6e5f', textTransform:'uppercase', letterSpacing:1, marginBottom:6 })}>Status</div>
             <select className="inp" style={s({ width:'100%', boxSizing:'border-box' })} value={filters.visited} onChange={e=>setFilters(f=>({...f,visited:e.target.value}))}>
               {['All','Wishlist','Visited'].map(v=><option key={v}>{v}</option>)}
+            </select>
+          </div>
+
+          {/* Rating */}
+          <div>
+            <div style={s({ fontFamily:"'DM Sans',sans-serif", fontSize:11, color:'#7a6e5f', textTransform:'uppercase', letterSpacing:1, marginBottom:6 })}>Rating</div>
+            <select className="inp" style={s({ width:'100%', boxSizing:'border-box' })} value={filters.rating} onChange={e=>setFilters(f=>({...f,rating:e.target.value}))}>
+              {['All','5 ★','4+ ★','3+ ★'].map(v=><option key={v}>{v}</option>)}
             </select>
           </div>
 
@@ -214,6 +215,7 @@ export default function App() {
                     <span className="tag" style={s({ background:'#2a2016', color:'#c4a882', border:'1px solid #3a3228' })}>{r.cuisine}</span>
                     <span className="tag" style={s({ fontWeight:600, background:'transparent', border:`1px solid ${priceColor(r.price)}55`, color:priceColor(r.price) })}>{r.price}</span>
                     <span className="tag" style={s({ background:'#1a1f2a', color:'#82a8c4', border:'1px solid #283040' })}>{r.vibe}</span>
+                    {r.rating != null && <span className="tag" style={s({ background:'#2a1f0a', color:'#f59e0b', border:'1px solid #5a4020' })}>★ {r.rating}</span>}
                   </div>
                   {r.location && <div style={s({ fontSize:13, color:'#7a6e5f', marginBottom:7 })}>📍 {r.location}</div>}
                   {r.notes && <div style={s({ fontSize:13, color:'#a09282', fontStyle:'italic', lineHeight:1.5, marginBottom:11 })}>"{r.notes}"</div>}

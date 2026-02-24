@@ -10,7 +10,7 @@ export async function POST(request) {
       headers: {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': key,
-        'X-Goog-FieldMask': 'places.id,places.websiteUri,places.photos'
+        'X-Goog-FieldMask': 'places.id,places.websiteUri,places.photos,places.rating'
       },
       body: JSON.stringify({ textQuery: `${name} restaurant ${location}`, maxResultCount: 1 })
     })
@@ -21,9 +21,10 @@ export async function POST(request) {
     const place = searchData.places[0]
     const website = place.websiteUri || null
     const photoName = place.photos?.[0]?.name || null
+    const rating = place.rating || null
 
-    return Response.json({ photoName, website })
+    return Response.json({ photoName, website, rating })
   } catch {
-    return Response.json({ photoName: null, website: null })
+    return Response.json({ photoName: null, website: null, rating: null })
   }
 }
