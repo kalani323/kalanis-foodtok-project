@@ -14,7 +14,13 @@ const SAMPLE = [
 const priceColor = p => ({ '$':'#4ade80','$$':'#facc15','$$$':'#f97316','$$$$':'#f43f5e' }[p] || '#ccc')
 
 export default function App() {
-  const [restaurants, setRestaurants] = useState(SAMPLE)
+  const [restaurants, setRestaurants] = useState(() => {
+    if (typeof window === 'undefined') return SAMPLE
+    try {
+      const saved = localStorage.getItem('kfr_restaurants')
+      return saved ? JSON.parse(saved) : SAMPLE
+    } catch { return SAMPLE }
+  })
   const [showForm, setShowForm] = useState(false)
   const [filters, setFilters] = useState({ cuisine:'All', price:'All', vibe:'All', visited:'All', search:'' })
   const [form, setForm] = useState(BLANK)
@@ -71,7 +77,11 @@ export default function App() {
   const del = id => setRestaurants(p => p.filter(r => r.id !== id))
 
   useEffect(() => {
-    SAMPLE.forEach(r => {
+    localStorage.setItem('kfr_restaurants', JSON.stringify(restaurants))
+  }, [restaurants])
+
+  useEffect(() => {
+    restaurants.filter(r => !r.thumb).forEach(r => {
       fetch('/api/places', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
