@@ -76,6 +76,7 @@ export default function App() {
   const closeForm = () => { setShowForm(false); setStatus('idle'); setPreview(null); setForm(BLANK); setEditId(null) }
 
   const persist = (list) => {
+    localStorage.setItem('kfr_restaurants', JSON.stringify(list))
     fetch('/api/restaurants', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -135,11 +136,16 @@ export default function App() {
     })
   }
 
-  // Load from database on mount
+  // Load from database on mount, fall back to localStorage
   useEffect(() => {
+    const local = (() => {
+      try { const s = localStorage.getItem('kfr_restaurants'); return s ? JSON.parse(s) : null } catch { return null }
+    })()
+    if (local?.length) setRestaurants(local)
+
     fetch('/api/restaurants')
       .then(r => r.json())
-      .then(data => { if (Array.isArray(data) && data.length) setRestaurants(data) })
+      .then(data => { if (Array.isArray(data) && data.length) { setRestaurants(data); localStorage.setItem('kfr_restaurants', JSON.stringify(data)) } })
       .catch(() => {})
       .finally(() => setInitialized(true))
   }, [])
