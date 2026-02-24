@@ -34,7 +34,7 @@ export async function POST(request) {
   try {
     const client = new Anthropic({ apiKey })
     message = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 800,
       system: `You are analyzing a TikTok or Instagram screenshot to extract restaurant info. Look at ALL text: location pins, captions, hashtags, on-screen text, menus, signage, anything.
 
